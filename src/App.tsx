@@ -6,13 +6,14 @@ import { CampaignDisplay } from './components/CampaignDisplay';
 import { AlgerianOutroStudio } from './components/AlgerianOutroStudio';
 import { ChatbotInterface } from './components/ChatbotInterface';
 import { VideoStudio } from './components/VideoStudio';
+import { AdTemplateLibrary } from './components/AdTemplateLibrary';
 import { EmailCampaign } from './types/index';
 import { generateDefaultCampaign } from './utils/campaign';
 import { Sparkles, AlertCircle, Wand2, Mic, MessageSquare } from 'lucide-react';
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
-  const [activeTab, setActiveTab] = useState<'campaign' | 'algerian_outros' | 'chat' | 'video'>('campaign');
+  const [activeTab, setActiveTab] = useState<'campaign' | 'algerian_outros' | 'chat' | 'video' | 'ad_templates'>('campaign');
 
   useEffect(() => {
     const handlePopState = () => setCurrentPath(window.location.pathname);
@@ -281,7 +282,10 @@ export default function App() {
         {/* Tab 3: Video Studio */}
         {activeTab === 'video' && <VideoStudio />}
 
-        {/* Tab 4: Gemini Chatbot */}
+        {/* Tab 4: Editable Ad Template Library */}
+        {activeTab === 'ad_templates' && <AdTemplateLibrary />}
+
+        {/* Tab 5: Gemini Chatbot */}
         {activeTab === 'chat' && (
           <ChatbotInterface
             onInsertToCampaign={handleInsertChatIntoCampaign}
