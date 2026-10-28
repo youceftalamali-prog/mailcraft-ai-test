@@ -132,6 +132,10 @@ export const AdTemplateLibrary: React.FC = () => {
         ctx.fillStyle = template.accent; ctx.fillRect(70, 1200, 580 * progress, 4);
       };
       recorder.start();
+      if (audioUrl && audioEl && audioStream) {
+        audioEl.currentTime = 0;
+        await audioEl.play();
+      }
       const start = performance.now();
       await new Promise<void>((resolve) => {
         const frame = (now: number) => {
