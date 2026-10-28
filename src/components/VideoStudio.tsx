@@ -17,6 +17,14 @@ export const VideoStudio: React.FC = () => {
   const [visualStyle, setVisualStyle] = useState('cinematic product advertisement');
   const [storyboard, setStoryboard] = useState('');
   const [storyboardBusy, setStoryboardBusy] = useState(false);
+  const [lumaBusy, setLumaBusy] = useState(false);
+  const [lumaPrompt, setLumaPrompt] = useState('A luxury cinematic product advertisement, elegant studio lighting, slow camera orbit, realistic materials, premium beauty commercial, vertical 9:16, no generated text or logos.');
+  const [lumaVideoUrl, setLumaVideoUrl] = useState('');
+  const [lumaStatus, setLumaStatus] = useState('');
+  const [lumaError, setLumaError] = useState('');
+  const [lumaAspectRatio, setLumaAspectRatio] = useState('9:16');
+  const [lumaDuration, setLumaDuration] = useState('5s');
+  const [lumaResolution, setLumaResolution] = useState('720p');
   const [error, setError] = useState('');
   const imageRef = useRef<HTMLImageElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -78,6 +86,39 @@ export const VideoStudio: React.FC = () => {
       setError(e instanceof Error ? e.message : 'حدث خطأ أثناء إنشاء مخطط المشاهد.');
       setStatus('');
     } finally { setStoryboardBusy(false); }
+  };
+
+
+  const generateLumaVideo = async () => {
+    if (!lumaPrompt.trim()) { setLumaError('اكتب وصف المشهد أولاً.'); return; }
+    setLumaBusy(true); setLumaError(''); setLumaVideoUrl(''); setLumaStatus('جارٍ إرسال طلب الفيديو إلى Luma Ray 3.2…');
+    try {
+      const createResponse = await fetch('/api/luma/video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: lumaPrompt.trim(), aspectRatio: lumaAspectRatio, duration: lumaDuration, resolution: lumaResolution })
+      });
+      const created = await createResponse.json() as { generationId?: string; error?: string; details?: string };
+      if (!createResponse.ok || !created.generationId) throw new Error(created.error || created.details || 'تعذر بدء توليد الفيديو.');
+      setLumaStatus('تم إرسال الطلب. جارٍ انتظار الفيديو؛ قد تستغرق العملية عدة دقائق…');
+      const deadline = Date.now() + 8 * 60 * 1000;
+      while (Date.now() < deadline) {
+        await new Promise(resolve => window.setTimeout(resolve, 5000));
+        const statusResponse = await fetch(`/api/luma/video/${encodeURIComponent(created.generationId)}`);
+        const statusData = await statusResponse.json() as { state?: string; videoUrl?: string; error?: string; details?: string };
+        if (!statusResponse.ok) throw new Error(statusData.error || statusData.details || 'تعذر التحقق من حالة الفيديو.');
+        if (statusData.state === 'completed' && statusData.videoUrl) {
+          setLumaVideoUrl(statusData.videoUrl);
+          setLumaStatus('اكتمل الفيديو. يمكنك معاينته أو فتحه وتنزيله من رابط Luma.');
+          return;
+        }
+        if (statusData.state === 'failed') throw new Error(statusData.error || 'فشل نموذج Luma في توليد الفيديو.');
+      }
+      throw new Error('استغرق التوليد أكثر من 8 دقائق. أعد المحاولة لاحقًا؛ قد يكون الطلب ما زال قيد المعالجة.');
+    } catch (e) {
+      setLumaError(e instanceof Error ? e.message : 'حدث خطأ أثناء توليد الفيديو عبر Luma.');
+      setLumaStatus('');
+    } finally { setLumaBusy(false); }
   };
 
   const createVideo = async () => {
@@ -166,6 +207,37 @@ export const VideoStudio: React.FC = () => {
       <div className="flex items-center gap-3"><div className="rounded-2xl bg-indigo-500/20 p-3"><Film className="h-7 w-7 text-indigo-300" /></div><div><p className="text-xs font-bold tracking-widest text-indigo-300">MAILCRAFT AI • VIDEO STUDIO</p><h1 className="mt-1 text-2xl font-extrabold text-white sm:text-3xl">استوديو إنشاء الفيديو</h1></div></div>
       <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">حوّل صورة المنتج ونص الإعلان إلى فيديو عمودي مع تعليق صوتي من Gemini TTS. يتم تركيب الفيديو داخل المتصفح دون رفع صورة المنتج إلى خدمة خارجية.</p>
       <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-200"><span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">1080 × 1920</span><span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">صوت جزائري</span><span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">تنزيل WebM</span></div>
+    </div>
+    <div className="space-y-4 rounded-3xl border border-violet-500/30 bg-gradient-to-br from-violet-950/50 to-slate-900 p-5 sm:p-6">
+      <div>
+        <p className="text-xs font-bold tracking-wider text-violet-300">LUMA RAY 3.2 • TEXT-TO-VIDEO</p>
+        <h2 className="mt-1 text-lg font-extrabold text-white">توليد فيديو متحرك حقيقي</h2>
+        <p className="mt-1 text-sm leading-6 text-slate-400">يُرسل وصفك إلى واجهة Luma الرسمية ويعرض الفيديو عند اكتماله. هذا المسار Text-to-Video؛ لا يحرّك صورة المنتج المرفوعة بعد.</p>
+      </div>
+      <label className="block text-sm font-bold text-slate-200">وصف المشهد وحركة الكاميرا
+        <textarea value={lumaPrompt} onChange={e => setLumaPrompt(e.target.value)} rows={4} placeholder="صف المنتج، الإضاءة، حركة الكاميرا، الخلفية والمزاج…" className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm leading-6 text-white outline-none focus:border-violet-400" />
+      </label>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <label className="block text-xs font-bold text-slate-300">الاتجاه
+          <select value={lumaAspectRatio} onChange={e => setLumaAspectRatio(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm"><option value="9:16">عمودي 9:16</option><option value="16:9">أفقي 16:9</option><option value="1:1">مربع 1:1</option><option value="4:3">4:3</option><option value="3:4">3:4</option></select>
+        </label>
+        <label className="block text-xs font-bold text-slate-300">المدة
+          <select value={lumaDuration} onChange={e => setLumaDuration(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm"><option value="5s">5 ثوانٍ</option><option value="9s">9 ثوانٍ</option></select>
+        </label>
+        <label className="block text-xs font-bold text-slate-300">الدقة
+          <select value={lumaResolution} onChange={e => setLumaResolution(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm"><option value="540p">540p</option><option value="720p">720p</option><option value="1080p">1080p</option></select>
+        </label>
+      </div>
+      <button disabled={lumaBusy} onClick={generateLumaVideo} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 font-bold text-white hover:bg-violet-500 disabled:opacity-50">
+        {lumaBusy ? <><LoaderCircle className="h-4 w-4 animate-spin" /> جارٍ توليد الفيديو…</> : 'توليد فيديو متحرك عبر Luma'}
+      </button>
+      {lumaStatus && <p role="status" className="rounded-xl border border-violet-500/20 bg-violet-950/30 p-3 text-sm leading-6 text-violet-100">{lumaStatus}</p>}
+      {lumaError && <p role="alert" className="rounded-xl border border-red-500/30 bg-red-950/30 p-3 text-sm text-red-200">{lumaError}</p>}
+      {lumaVideoUrl && <div className="space-y-3 rounded-xl border border-violet-500/30 bg-slate-950 p-3">
+        <video controls playsInline src={lumaVideoUrl} className="mx-auto max-h-[520px] rounded-lg" />
+        <a href={lumaVideoUrl} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white hover:bg-emerald-500">فتح / تنزيل الفيديو الناتج</a>
+      </div>}
+      <p className="text-xs leading-5 text-slate-500">يتطلب مفتاح Luma API ورصيدًا متاحًا. الأرصدة التجريبية تعتمد على الحساب، ولا نضمن مجانية مستمرة. قد يكون الفيديو الناتج صامتًا؛ يظل Gemini TTS مسار الصوت المستقل.</p>
     </div>
     <div className="space-y-4 rounded-3xl border border-cyan-500/25 bg-slate-900/70 p-5 sm:p-6">
       <div>
