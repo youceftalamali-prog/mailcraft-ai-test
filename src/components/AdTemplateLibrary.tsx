@@ -123,11 +123,11 @@ export const AdTemplateLibrary: React.FC = () => {
         recorder.onerror = () => reject(new Error('تعذر تسجيل الفيديو.'));
         recorder.onstop = () => resolve(new Blob(chunks, { type: mimeType }));
       });
-      const videoScenes = videoScript.split('\\n').map((line) => line.trim()).filter(Boolean);
+      const videoScenes = videoScript.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
       const drawFrame = (time: number) => {
         const progress = Math.min(time / audioDuration, 1);
         const sceneIndex = videoScenes.length ? Math.min(videoScenes.length - 1, Math.floor(progress * videoScenes.length)) : -1;
-        const sceneCaption = sceneIndex >= 0 ? videoScenes[sceneIndex].replace(/^المشهد\\s*\\d+\\s*[:：-]?\\s*/, '') : '';
+        const sceneCaption = sceneIndex >= 0 ? videoScenes[sceneIndex].replace(/^المشهد\s*\d+\s*[:：-]?\s*/, '') : '';
         const gradient = ctx.createLinearGradient(0, 0, width, height);
         if (selected === 'offer') { gradient.addColorStop(0, '#1b1110'); gradient.addColorStop(1, '#542015'); }
         else if (selected === 'problem') { gradient.addColorStop(0, '#071d1a'); gradient.addColorStop(1, '#123d35'); }
