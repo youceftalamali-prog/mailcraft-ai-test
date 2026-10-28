@@ -21,6 +21,7 @@ export const AdTemplateLibrary: React.FC = () => {
   const [script, setScript] = useState('اكتشفي عنايتك الجديدة مع [اسم المنتج]. جودة وأناقة في كل استعمال. اطلبي الآن، والدفع عند الاستلام.');
   const [dialect, setDialect] = useState('algerian');
   const [voice, setVoice] = useState('Zephyr');
+  const [durationSeconds, setDurationSeconds] = useState(30);
   const [imageUrl, setImageUrl] = useState('');
   const [imageName, setImageName] = useState('');
   const [audioUrl, setAudioUrl] = useState('');
@@ -101,7 +102,7 @@ export const AdTemplateLibrary: React.FC = () => {
         recorder.onstop = () => resolve(new Blob(chunks, { type: mimeType }));
       });
       const drawFrame = (time: number) => {
-        const progress = Math.min(time / 10, 1);
+        const progress = Math.min(time / durationSeconds, 1);
         const gradient = ctx.createLinearGradient(0, 0, width, height);
         if (selected === 'offer') { gradient.addColorStop(0, '#1b1110'); gradient.addColorStop(1, '#542015'); }
         else if (selected === 'problem') { gradient.addColorStop(0, '#071d1a'); gradient.addColorStop(1, '#123d35'); }
@@ -141,7 +142,7 @@ export const AdTemplateLibrary: React.FC = () => {
         const frame = (now: number) => {
           const elapsed = (now - start) / 1000;
           drawFrame(elapsed);
-          if (elapsed < 10) requestAnimationFrame(frame);
+          if (elapsed < durationSeconds) requestAnimationFrame(frame);
           else resolve();
         };
         requestAnimationFrame(frame);
@@ -152,9 +153,9 @@ export const AdTemplateLibrary: React.FC = () => {
       audioStream?.getTracks().forEach(track => track.stop());
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url; link.download = 'campaignforge-ad-template.webm'; link.click();
+      link.href = url; link.download = `campaignforge-ad-${durationSeconds}s.webm`; link.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-      setStatus('تم تصدير الفيديو بصيغة WebM. يمكنك تشغيله أو تحويله إلى MP4 عند الحاجة.');
+      setStatus('تم تصدير فيديو مدته ${durationSeconds === 60 ? 'دقيقة واحدة' : `${durationSeconds} ثانية`} بصيغة WebM. يمكنك تشغيله أو تحويله إلى MP4 عند الحاجة.');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'تعذر تصدير الفيديو.');
       setStatus('');
@@ -170,7 +171,7 @@ export const AdTemplateLibrary: React.FC = () => {
             <h1 className="text-2xl sm:text-3xl font-black text-white">اختَر قالبًا، عدّله، وصدّر إعلانك</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">قوالب قابلة لإعادة الاستخدام مع صورة المنتج والسعر والنص والتعليق الصوتي. لا تحتاج إلى توليد فيديو جديد بالذكاء الاصطناعي لكل إعلان.</p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-slate-300"><Video className="mb-1 h-5 w-5 text-pink-300" /> فيديو عمودي 9:16 • 10 ثوانٍ</div>
+          <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-slate-300"><Video className="mb-1 h-5 w-5 text-pink-300" /> فيديو عمودي 9:16 • مدة قابلة للاختيار</div>
         </div>
       </div>
 
@@ -221,7 +222,15 @@ export const AdTemplateLibrary: React.FC = () => {
 
         <div className="space-y-4 lg:sticky lg:top-28 lg:col-span-5">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-            <div className="mb-3 flex items-center justify-between"><h2 className="font-bold text-white">معاينة القالب</h2><span className="text-xs text-slate-500">9:16</span></div>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="font-bold text-white">معاينة القالب</h2><span className="text-xs text-slate-500">9:16</span></div>
+            <label className="mb-4 block text-sm text-slate-300">مدة الإعلان
+              <select value={durationSeconds} onChange={(e) => setDurationSeconds(Number(e.target.value))} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white">
+                <option value={10}>10 ثوانٍ</option>
+                <option value={20}>20 ثانية</option>
+                <option value={30}>30 ثانية</option>
+                <option value={60}>دقيقة واحدة (60 ثانية)</option>
+              </select>
+            </label>
             <div className="mx-auto max-w-[300px] overflow-hidden rounded-2xl border border-white/10 p-4 text-center shadow-2xl" style={{ background: `linear-gradient(150deg, #09090b, ${template.accent}44)` }}>
               <p className="text-[10px] font-semibold tracking-[0.2em]" style={{ color: template.accent }}>CAMPAIGNFORGE</p>
               <h3 className="mt-3 text-xl font-black text-white">{headline || 'عنوان الإعلان'}</h3>
