@@ -155,7 +155,8 @@ export const AdTemplateLibrary: React.FC = () => {
       const link = document.createElement('a');
       link.href = url; link.download = `campaignforge-ad-${durationSeconds}s.webm`; link.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-      setStatus('تم تصدير فيديو مدته ${durationSeconds === 60 ? 'دقيقة واحدة' : `${durationSeconds} ثانية`} بصيغة WebM. يمكنك تشغيله أو تحويله إلى MP4 عند الحاجة.');
+      const durationLabel = durationSeconds === 60 ? 'دقيقة واحدة' : `${durationSeconds} ثانية`;
+      setStatus(`تم تصدير فيديو مدته ${durationLabel} بصيغة WebM. يمكنك تشغيله أو تحويله إلى MP4 عند الحاجة.`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'تعذر تصدير الفيديو.');
       setStatus('');
