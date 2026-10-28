@@ -247,7 +247,8 @@ app.post('/api/generate-voice-script', async (req: Request, res: Response): Prom
       dialectLabel = 'العاصمي (الوسط)';
       dialectRule =
         'اللهجة العاصمية والوسط الجزائري: كلمات مميزة مثل (خاوتي وخواتاتي، ما تنساوش ديرو جيم وابوني، نتلاقاو فالعدد الجاي بحول الله، تهلاو ف رواحتكم.. سلام). نبرة دافئة وودودة وخفيفة.';
-    } else if (      dialect === 'eastern' ||
+    } else if (
+      dialect === 'eastern' ||
       dialect.includes('الشرقي') ||
       dialect.includes('قسنطين') ||
       dialect.includes('عناب')
@@ -496,7 +497,8 @@ app.post('/api/generate-speech', async (req: Request, res: Response): Promise<vo
           voiceConfig: {
             prebuiltVoiceConfig: { voiceName: validVoice },
           },
-        },      },
+        },
+      },
     });
 
     const base64Audio = ttsResponse.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
@@ -745,7 +747,8 @@ const SERVER_EMOTION_STYLES: Record<string, { ar: string; instruction: string }>
       'Emotionally expressive, heartfelt. Warmth and sincerity, gentle emphasis on emotional words.',
   },
   gradual_story: {
-    ar: 'قصة بمشاعر متدرجة',    instruction:
+    ar: 'قصة بمشاعر متدرجة',
+    instruction:
       'Narrative arc: start neutral/curious, gradually increase warmth, finish with clear emotional resolution.',
   },
 };
@@ -1046,7 +1049,8 @@ async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: { middlewareMode: true },      appType: 'spa',
+      server: { middlewareMode: true },
+      appType: 'spa',
     });
     app.use(vite.middlewares);
   } else {
