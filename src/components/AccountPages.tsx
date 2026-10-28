@@ -87,7 +87,11 @@ export function PricingPage({ onNavigate }: PageProps) {
             <ul className="my-7 flex-1 space-y-4">
               {plan.features.map((feature) => <li key={feature} className="flex gap-3 text-sm text-slate-300"><Check className="h-5 w-5 shrink-0 text-emerald-400" />{feature}</li>)}
             </ul>
-            <button onClick={() => onNavigate('/signup')} className={plan.featured ? primaryButton + ' w-full' : 'w-full rounded-xl border border-slate-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800'}>{plan.name === 'Free' ? 'Get started free' : 'Join the plan waitlist'}</button>
+            {plan.name === 'Free' ? (
+              <button onClick={() => onNavigate('/signup')} className="w-full rounded-xl border border-slate-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800">Get started free</button>
+            ) : (
+              <button type="button" disabled className={primaryButton + ' w-full'}>Paid checkout coming soon</button>
+            )}
           </article>
         ))}
       </div>
