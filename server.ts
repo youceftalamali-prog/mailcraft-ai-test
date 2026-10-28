@@ -374,32 +374,26 @@ app.post('/api/generate-voice-script', async (req: Request, res: Response): Prom
     for (const ttsModel of ttsModels) {
       if (quotaExceeded) break;
       try {
-        const ttsResponse = await ai.models.generateContent({
+        const ttsResponse = await ai.interactions.create({
           model: ttsModel,
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                {
-                  text: textForTts,
-                  speechMetadata: {
-                    style: speechStyle,
-                  },
-                },
-              ],
-            },
-          ],
-          config: {
-            responseModalities: ['AUDIO'],
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: validVoice },
-              },
-            },
+          input: [{
+            type: 'user_input',
+            content: [{
+              type: 'text',
+              text: textForTts,
+              annotations: [{
+                type: 'speech_metadata',
+                style: speechStyle,
+              }],
+            }],
+          }],
+          response_format: { type: 'audio' },
+          generation_config: {
+            speech_config: [{ voice: validVoice }],
           },
         });
 
-        const base64Audio = ttsResponse.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        const base64Audio = ttsResponse.output_audio?.data;
         if (base64Audio) {
           audioDataUrl = `data:audio/wav;base64,${base64Audio}`;
           break;
@@ -476,32 +470,26 @@ app.post('/api/generate-speech', async (req: Request, res: Response): Promise<vo
 
     const validVoice = ['Kore', 'Puck', 'Fenrir', 'Zephyr', 'Charon'].includes(voiceName) ? voiceName : 'Zephyr';
 
-    const ttsResponse = await ai.models.generateContent({
+    const ttsResponse = await ai.interactions.create({
       model: 'gemini-3.8-flash-lite-tts',
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            {
-              text,
-              speechMetadata: {
-                style: speechStyle || 'Natural, warm, engaging Algerian dialect and tone with friendly outro energy',
-              },
-            },
-          ],
-        },
-      ],
-      config: {
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: validVoice },
-          },
-        },
+      input: [{
+        type: 'user_input',
+        content: [{
+          type: 'text',
+          text,
+          annotations: [{
+            type: 'speech_metadata',
+            style: speechStyle || 'Natural, warm, engaging Algerian dialect and tone with friendly outro energy',
+          }],
+        }],
+      }],
+      response_format: { type: 'audio' },
+      generation_config: {
+        speech_config: [{ voice: validVoice }],
       },
     });
 
-    const base64Audio = ttsResponse.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    const base64Audio = ttsResponse.output_audio?.data;
     if (!base64Audio) {
       res.status(500).json({ error: 'Audio data was not returned by TTS model' });
       return;
