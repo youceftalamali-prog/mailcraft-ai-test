@@ -15,7 +15,7 @@ notepad .env
 npm run dev
 ```
 
-In `.env`, set `GEMINI_API_KEY` to your own key. Keep it private; never commit it or paste it into chat. The current app starts at:
+In `.env`, set `GEMINI_API_KEY` to your own key. Keep it private; never commit it or paste it into chat. For the xKiro storyboard helper, also set `XKIRO_API_KEY`; the default planning model is `qwen/qwen3.8-omni-flash:free`. The xKiro key is only read by the Express server and must never be put in frontend code. The current app starts at:
 
 - App: http://localhost:3000
 - Pages: http://localhost:3000/pricing, http://localhost:3000/signup, http://localhost:3000/login, http://localhost:3000/admin
@@ -50,3 +50,11 @@ Before using real accounts, configure a separate staging Neon database, apply `a
 ## Deployment gate
 
 No production deploy is part of this guide. Only consider deployment after typecheck, tests, production build, auth/security checks, and AI/TTS regression tests pass, then review the changes and explicitly approve publishing.
+
+
+## xKiro and the video studio
+
+- Create a key in the [xKiro dashboard](https://xkiro.com/) and set `XKIRO_API_KEY` in your local `.env`.
+- The Video Studio can ask xKiro to produce a timestamped ad storyboard. The default model is `qwen/qwen3.8-omni-flash:free`; check xKiro's live catalog for current availability and free-tier limits.
+- Important limitation: xKiro's published API reference currently documents chat, image generation, speech and search endpoints, but does not list a video-generation endpoint. Therefore this integration generates a storyboard, **not** AI-rendered moving video. The existing browser exporter still produces a still-image WebM with Gemini TTS audio.
+- Gemini TTS remains unchanged. Do not commit API keys or deploy this branch until local lint, tests and build have been reviewed.
