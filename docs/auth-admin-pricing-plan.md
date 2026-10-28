@@ -57,6 +57,14 @@
 - Exact plan prices, billing cadence, usage quotas, and whether free users must verify email.
 - Email provider for password resets and account verification.
 
-## Status
+## Implementation checkpoint (2026-10-28)
 
-Planning only. This document does not alter app runtime behavior or Gemini/TTS code.
+- Added presentational page shells in `src/components/AccountPages.tsx` for login/signup, pricing, and the restricted admin console.
+- Added minimal path-based navigation in `src/App.tsx` for `/login`, `/signup`, `/pricing`, and `/admin`; existing campaign/voice/chat UI remains the default route.
+- Login/signup are explicitly non-functional previews; no credentials are submitted and no account is created.
+- Admin page exposes no user data or admin actions until server-side auth and role checks exist.
+- Paid checkout remains disabled until a payment provider and verified webhook handling are implemented.
+- No Gemini/TTS endpoint code was changed.
+- Build/typecheck/test execution has not been performed in this remote-edit step; verify before merging.
+
+This checkpoint is not production-ready authentication or billing. Do not deploy or merge until backend security, database connectivity, and regression tests are complete.
