@@ -5,14 +5,15 @@ type TemplateId = 'luxury' | 'offer' | 'problem' | 'minimal';
 type Template = { id: TemplateId; name: string; description: string; accent: string; layout: 'center' | 'split' | 'editorial' | 'bold' };
 
 const templates: Template[] = [
-  { id: 'luxury', name: 'Luxury Product', description: 'إعلان فاخر للعناية بالبشرة والعطور والمجوهرات', accent: '#d6b36a', layout: 'center' },
-  { id: 'offer', name: 'Special Offer', description: 'السعر والعرض في الواجهة مع دعوة للشراء', accent: '#f97316', layout: 'bold' },
-  { id: 'problem', name: 'Problem → Solution', description: 'ابدأ بالمشكلة ثم قدّم المنتج كحل', accent: '#34d399', layout: 'split' },
-  { id: 'minimal', name: 'Clean Showcase', description: 'عرض بسيط وأنيق يركّز على صورة المنتج', accent: '#a5b4fc', layout: 'editorial' },
+  { id: 'luxury', name: 'جمال فاخر', description: 'كريمات وسيرومات مع خلفية سوداء ولمسات ذهبية', accent: '#d6b36a', layout: 'center' },
+  { id: 'offer', name: 'عرض تجميلي', description: 'إبراز سعر الكريم أو السيروم وعرض الشراء', accent: '#f97316', layout: 'bold' },
+  { id: 'problem', name: 'روتين العناية', description: 'قالب لعرض خطوة من روتين العناية بالبشرة', accent: '#34d399', layout: 'split' },
+  { id: 'minimal', name: 'عرض المنتج النقي', description: 'تصميم هادئ يركّز على صورة العبوة الأصلية', accent: '#a5b4fc', layout: 'editorial' },
 ];
 
 export const AdTemplateLibrary: React.FC = () => {
   const [selected, setSelected] = useState<TemplateId>('luxury');
+  const [productCategory, setProductCategory] = useState('كريم للعناية بالبشرة');
   const [productName, setProductName] = useState('اسم المنتج');
   const [price, setPrice] = useState('2500 دج');
   const [headline, setHeadline] = useState('جمالك يبدأ من هنا');
@@ -134,7 +135,7 @@ export const AdTemplateLibrary: React.FC = () => {
         else { gradient.addColorStop(0, '#09090b'); gradient.addColorStop(1, '#272018'); }
         ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height);
         ctx.textAlign = 'center'; ctx.direction = 'rtl';
-        ctx.fillStyle = template.accent; ctx.font = '600 22px Arial'; ctx.fillText('CAMPAIGNFORGE • AD TEMPLATE', width / 2, 76);
+        ctx.fillStyle = template.accent; ctx.font = '600 22px Arial'; ctx.fillText('BEAUTY • SKINCARE', width / 2, 76);
         ctx.fillStyle = '#ffffff'; ctx.font = 'bold 44px Arial'; ctx.fillText(headline.slice(0, 30), width / 2, 145);
         const maxW = 500, maxH = selected === 'minimal' ? 540 : 470;
         const ratio = Math.min(maxW / img.width, maxH / img.height);
@@ -196,8 +197,8 @@ export const AdTemplateLibrary: React.FC = () => {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-indigo-300/20 bg-indigo-400/10 px-3 py-1 text-xs font-semibold text-indigo-200"><Sparkles className="h-3.5 w-3.5" /> مكتبة القوالب الإعلانية</div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white">اختَر قالبًا، عدّله، وصدّر إعلانك</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">قوالب قابلة لإعادة الاستخدام مع صورة المنتج والسعر والنص والتعليق الصوتي. لا تحتاج إلى توليد فيديو جديد بالذكاء الاصطناعي لكل إعلان.</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-white">استوديو إعلانات التجميل والعناية بالبشرة</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">اختر القالب واكتب سكريبت الكلام وسكريبت الفيديو بنفسك. صورة العبوة الأصلية تُعرض كما رفعتها، مع الحفاظ على تناسب أبعادها دون قصّها أو إعادة رسمها.</p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-slate-300"><Video className="mb-1 h-5 w-5 text-pink-300" /> فيديو عمودي 9:16 • المدة تتبع الصوت تلقائيًا</div>
         </div>
@@ -220,13 +221,14 @@ export const AdTemplateLibrary: React.FC = () => {
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
         <div className="space-y-5 lg:col-span-7">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-            <h2 className="mb-4 text-lg font-bold text-white">1. معلومات المنتج</h2>
+            <h2 className="mb-4 text-lg font-bold text-white">1. منتج التجميل وصورته الأصلية</h2>
             <label className="mb-4 flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-600 bg-slate-950/60 p-4 text-center hover:border-indigo-400">
-              {imageUrl ? <img src={imageUrl} alt="صورة المنتج" className="max-h-48 rounded-lg object-contain" /> : <><ImagePlus className="mb-2 h-7 w-7 text-indigo-300" /><span className="font-semibold">ارفع صورة المنتج</span><span className="mt-1 text-xs text-slate-400">PNG أو JPG أو WebP</span></>}
+              {imageUrl ? <img src={imageUrl} alt="صورة المنتج الأصلية" className="max-h-48 rounded-lg object-contain" /> : <><ImagePlus className="mb-2 h-7 w-7 text-indigo-300" /><span className="font-semibold">ارفع صورة المنتج الأصلية</span><span className="mt-1 text-xs text-slate-400">PNG أو JPG أو WebP — لن نقصّ العبوة أو نغيّر شكلها</span></>}
               <input type="file" accept="image/*" className="hidden" onChange={(event) => updateImage(event.target.files?.[0])} />
             </label>
             {imageName && <p className="mb-3 text-xs text-slate-400">{imageName}</p>}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="text-sm text-slate-300">فئة المنتج<select value={productCategory} onChange={(e) => setProductCategory(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white"><option>كريم للعناية بالبشرة</option><option>سيروم للوجه</option><option>كريم العين</option><option>غسول الوجه</option><option>مرطب</option><option>قناع للبشرة</option><option>منتج للعناية بالشعر</option><option>منتج تجميلي آخر</option></select></label>
               <label className="text-sm text-slate-300">اسم المنتج<input value={productName} onChange={(e) => setProductName(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white outline-none focus:border-indigo-400" /></label>
               <label className="text-sm text-slate-300">السعر<input value={price} onChange={(e) => setPrice(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white outline-none focus:border-indigo-400" /></label>
               <label className="text-sm text-slate-300 sm:col-span-2">العنوان الرئيسي<input value={headline} onChange={(e) => setHeadline(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white outline-none focus:border-indigo-400" /></label>
@@ -254,7 +256,7 @@ export const AdTemplateLibrary: React.FC = () => {
             <h2 className="mb-2 text-lg font-bold text-white">3. سكريبت الفيديو — تكتبه أنت</h2>
             <p className="mb-3 text-sm leading-6 text-slate-400">اكتب وصف اللقطات بالترتيب، كل مشهد في سطر مستقل. هذا الحقل منفصل عن كلام المعلّق الصوتي، ولن يعيد الذكاء الاصطناعي صياغته. في القالب الحالي تظهر أوصاف المشاهد بالتتابع على الفيديو؛ أما تنفيذ حركات كاميرا واقعية أو إنشاء موديل يتكلم فيحتاج محرّك فيديو مخصصًا.</p>
             <label className="block text-sm text-slate-300">وصف المشاهد<textarea value={videoScript} onChange={(e) => setVideoScript(e.target.value)} rows={6} placeholder={"المشهد 1: لقطة قريبة للعبوة...\nالمشهد 2: حركة كاميرا بطيئة...\nالمشهد 3: عرض السعر والدعوة للطلب..."} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-white outline-none focus:border-indigo-400" /></label>
-            <p className="mt-2 text-xs text-slate-500">نصيحة: خصّص هذا القالب لمنتجات التجميل، واذكر أن صورة العبوة الأصلية يجب أن تبقى كما هي.</p>
+            <p className="mt-2 text-xs text-slate-500">الفئة المختارة: {productCategory}. صورة المنتج تُرسم مع الحفاظ على نسبتها الأصلية؛ لا تستخدم قصًّا تلقائيًا أو فلاتر على الصورة.</p>
           </div>
         </div>
 
@@ -263,7 +265,7 @@ export const AdTemplateLibrary: React.FC = () => {
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="font-bold text-white">معاينة القالب</h2><span className="text-xs text-slate-500">9:16</span></div>
             <div className="mb-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-sm text-emerald-200">مدة الإعلان تُحدَّد تلقائيًا من طول التعليق الصوتي، ولا تحتاج لاختيارها يدويًا.{audioDuration ? ` المدة الحالية: ${Math.ceil(audioDuration)} ثانية.` : ' ولّد الصوت أو ارفع ملفًا صوتيًا أولًا.'}</div>
             <div className="mx-auto max-w-[300px] overflow-hidden rounded-2xl border border-white/10 p-4 text-center shadow-2xl" style={{ background: `linear-gradient(150deg, #09090b, ${template.accent}44)` }}>
-              <p className="text-[10px] font-semibold tracking-[0.2em]" style={{ color: template.accent }}>CAMPAIGNFORGE</p>
+              <p className="text-[10px] font-semibold tracking-[0.2em]" style={{ color: template.accent }}>BEAUTY • SKINCARE</p>
               <h3 className="mt-3 text-xl font-black text-white">{headline || 'عنوان الإعلان'}</h3>
               <div className="my-4 flex h-56 items-center justify-center rounded-xl bg-black/20 p-3">{imageUrl ? <img ref={previewImageRef} src={imageUrl} alt={productName} className="max-h-full max-w-full object-contain drop-shadow-2xl" /> : <div className="text-sm text-slate-500">صورة المنتج تظهر هنا</div>}</div>
               <p className="font-bold text-white">{productName || 'اسم المنتج'}</p>
@@ -273,7 +275,7 @@ export const AdTemplateLibrary: React.FC = () => {
             </div>
             <canvas ref={canvasRef} className="hidden" />
             <button onClick={exportVideo} disabled={busyExport || !imageUrl || !audioUrl || !audioDuration} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 font-bold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50">{busyExport ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}{busyExport ? 'جارٍ تصدير الفيديو…' : 'تصدير الفيديو الإعلاني'}</button>
-            <p className="mt-2 text-xs leading-5 text-slate-500">يتم التصدير محليًا إلى WebM، وتُطابق مدة الفيديو مدة الصوت تلقائيًا. يمكنك توليد الصوت أو رفع ملف صوتي.</p>
+            <p className="mt-2 text-xs leading-5 text-slate-500">يتم التصدير محليًا إلى WebM، ومدة الفيديو تتبع الصوت. القالب يحافظ على صورة العبوة كما هي، لكنه لا ينشئ مشاهد واقعية أو موديلًا متحدثًا.</p>
             {status && <p className="mt-3 text-sm text-emerald-300">{status}</p>}
             {error && <p role="alert" className="mt-3 text-sm text-red-300">{error}</p>}
             {audioUrl && <button onClick={() => audioRef.current?.play()} className="mt-3 inline-flex items-center gap-2 text-sm text-indigo-300 hover:text-indigo-200"><Play className="h-4 w-4" />استمع للتعليق الصوتي</button>}
