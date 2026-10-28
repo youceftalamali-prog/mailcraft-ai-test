@@ -1,9 +1,9 @@
 import React from 'react';
-import { Mail, Mic, MessageSquare, Sparkles, Wand2 } from 'lucide-react';
+import { Film, Mail, Mic, MessageSquare, Sparkles, Wand2 } from 'lucide-react';
 
 interface HeaderProps {
-  activeTab: 'campaign' | 'algerian_outros' | 'chat';
-  setActiveTab: (tab: 'campaign' | 'algerian_outros' | 'chat') => void;
+  activeTab: 'campaign' | 'algerian_outros' | 'chat' | 'video';
+  setActiveTab: (tab: 'campaign' | 'algerian_outros' | 'chat' | 'video') => void;
   onOpenSample: () => void;
 }
 
@@ -61,6 +61,19 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenS
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
             </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('video')}
+            aria-label="Video Studio tab"
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 ${
+              activeTab === 'video'
+                ? 'bg-pink-600 text-white shadow-sm shadow-pink-600/50'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            }`}
+          >
+            <Film className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>الفيديو</span>
           </button>
 
           <button
