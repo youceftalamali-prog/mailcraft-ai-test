@@ -1044,6 +1044,95 @@ app.post('/api/xkiro/video-storyboard', async (req: Request, res: Response): Pro
   }
 });
 
+
+type LumaGeneration = {
+  id?: string;
+  state?: string;
+  failure_reason?: string;
+  failure_code?: string;
+  output?: Array<{ url?: string; type?: string }>;
+};
+
+app.post('/api/luma/video', async (req: Request, res: Response): Promise<void> => {
+  const apiKey = process.env.LUMA_AGENTS_API_KEY;
+  if (!apiKey) {
+    res.status(503).json({ error: 'Luma غير مضبوط بعد. أضف LUMA_AGENTS_API_KEY إلى ملف .env.' });
+    return;
+  }
+  const { prompt, aspectRatio = '9:16', duration = '5s', resolution = '720p' } = req.body ?? {};
+  if (typeof prompt !== 'string' || !prompt.trim()) {
+    res.status(400).json({ error: 'اكتب وصف الفيديو أولاً.' });
+    return;
+  }
+  const allowedRatios = ['9:16', '16:9', '1:1', '4:3', '3:4'];
+  const allowedDurations = ['5s', '9s'];
+  const allowedResolutions = ['540p', '720p', '1080p'];
+  try {
+    const upstream = await fetch('https://agents.lumalabs.ai/v1/generations', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'ray-3.2',
+        type: 'video',
+        prompt: prompt.trim().slice(0, 5000),
+        aspect_ratio: allowedRatios.includes(aspectRatio) ? aspectRatio : '9:16',
+        video: {
+          resolution: allowedResolutions.includes(resolution) ? resolution : '720p',
+          duration: allowedDurations.includes(duration) ? duration : '5s'
+        }
+      })
+    });
+    const data = await upstream.json() as LumaGeneration & { error?: { message?: string }; message?: string };
+    if (!upstream.ok || !data.id) {
+      res.status(upstream.status >= 500 ? 502 : upstream.status || 502).json({
+        error: 'تعذر بدء توليد الفيديو عبر Luma.',
+        details: data.error?.message || data.message || `Luma returned HTTP ${upstream.status}`
+      });
+      return;
+    }
+    res.json({ success: true, generationId: data.id, state: data.state || 'queued', model: 'ray-3.2' });
+  } catch (err: unknown) {
+    console.error('Luma video submission failed:', err);
+    res.status(502).json({ error: 'تعذر الاتصال بخدمة Luma.', details: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+app.get('/api/luma/video/:id', async (req: Request, res: Response): Promise<void> => {
+  const apiKey = process.env.LUMA_AGENTS_API_KEY;
+  if (!apiKey) {
+    res.status(503).json({ error: 'أضف LUMA_AGENTS_API_KEY إلى ملف .env.' });
+    return;
+  }
+  const id = req.params.id;
+  if (!/^[a-zA-Z0-9_-]{8,128}$/.test(id)) {
+    res.status(400).json({ error: 'معرّف التوليد غير صالح.' });
+    return;
+  }
+  try {
+    const upstream = await fetch(`https://agents.lumalabs.ai/v1/generations/${encodeURIComponent(id)}`, {
+      headers: { Authorization: `Bearer ${apiKey}` }
+    });
+    const data = await upstream.json() as LumaGeneration & { error?: { message?: string }; message?: string };
+    if (!upstream.ok) {
+      res.status(upstream.status >= 500 ? 502 : upstream.status).json({
+        error: 'تعذر جلب حالة الفيديو.',
+        details: data.error?.message || data.message || `Luma returned HTTP ${upstream.status}`
+      });
+      return;
+    }
+    res.json({
+      success: true,
+      generationId: data.id || id,
+      state: data.state || 'unknown',
+      videoUrl: data.state === 'completed' ? data.output?.find(item => item.type === 'video')?.url || data.output?.[0]?.url || '' : '',
+      error: data.state === 'failed' ? data.failure_reason || data.failure_code || 'فشل توليد الفيديو.' : undefined
+    });
+  } catch (err: unknown) {
+    console.error('Luma video status failed:', err);
+    res.status(502).json({ error: 'تعذر الاتصال بخدمة Luma.', details: err instanceof Error ? err.message : String(err) });
+  }
+});
+
 // Mount Vite or serve static assets
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
