@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Download, ImagePlus, LoaderCircle, Mic, Play, Sparkles, Video } from 'lucide-react';
 
 type TemplateId = 'luxury' | 'offer' | 'problem' | 'minimal';
+type MotionId = 'multi' | 'orbit' | 'spin' | 'zoom' | 'float' | 'light';
+type StyleId = 'variety' | 'luxury' | 'natural' | 'pink' | 'dark';
 type Template = { id: TemplateId; name: string; description: string; accent: string; layout: 'center' | 'split' | 'editorial' | 'bold' };
 
 const templates: Template[] = [
@@ -13,6 +15,8 @@ const templates: Template[] = [
 
 export const AdTemplateLibrary: React.FC = () => {
   const [selected, setSelected] = useState<TemplateId>('luxury');
+  const [motion, setMotion] = useState<MotionId>('multi');
+  const [visualStyle, setVisualStyle] = useState<StyleId>('variety');
   const [productCategory, setProductCategory] = useState('كريم للعناية بالبشرة');
   const [productName, setProductName] = useState('اسم المنتج');
   const [price, setPrice] = useState('2500 دج');
@@ -37,6 +41,7 @@ export const AdTemplateLibrary: React.FC = () => {
   const objectUrlRef = useRef<string>('');
 
   const template = templates.find((item) => item.id === selected) ?? templates[0];
+  const cinematicPrompt = `Create a premium vertical 9:16 cosmetics advertisement for ${productName || 'the beauty product'} (${productCategory}). Preserve the uploaded product package image exactly: no redesign, no label changes, no invented packaging, no cropping. Style: ${visualStyle === 'variety' ? 'choose a suitable luxury, natural, pink editorial, or dark studio look' : visualStyle}. Motion direction: ${motion === 'multi' ? 'combine a smooth camera orbit, gentle push-in, floating movement, and moving studio highlights across separate shots' : motion === 'orbit' ? 'smooth 360-degree camera orbit around the product; use genuine multi-angle product assets or a 3D model for unseen sides' : motion === 'spin' ? 'product turntable rotation; only use a real multi-angle asset or 3D model for true rotation' : motion === 'zoom' ? 'slow cinematic push-in and pull-back' : motion === 'float' ? 'subtle floating product movement with a stable package image' : 'moving dramatic studio light and specular highlights around the scene'}. Follow these video scenes in order: ${videoScript}. Use the separately generated voiceover as the timing master; final duration must match the audio. Headline: ${headline}. Benefit: ${benefit}. Price: ${price}. CTA: ${cta}. Do not add unsupported cosmetic or medical claims.`;
 
   useEffect(() => () => {
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
@@ -140,10 +145,24 @@ export const AdTemplateLibrary: React.FC = () => {
         const maxW = 500, maxH = selected === 'minimal' ? 540 : 470;
         const ratio = Math.min(maxW / img.width, maxH / img.height);
         const iw = img.width * ratio, ih = img.height * ratio;
-        const bob = Math.sin(time * 1.5) * 8;
+        const bob = motion === 'float' || motion === 'multi' ? Math.sin(time * 1.5) * 16 : 0;
+        const zoom = motion === 'zoom' || motion === 'multi' ? 1 + 0.045 * Math.sin(time * 0.8) : 1;
+        const angle = motion === 'spin' ? Math.sin(time * 1.4) * 0.10 : motion === 'multi' ? Math.sin(time * 0.65) * 0.035 : 0;
+        const lightX = ((time * 95) % (width + 260)) - 130;
+        if (visualStyle === 'natural') { ctx.fillStyle = '#eadfce'; ctx.fillRect(0, 0, width, height); }
+        else if (visualStyle === 'pink') { ctx.fillStyle = '#3b172b'; ctx.fillRect(0, 0, width, height); }
+        else if (visualStyle === 'dark') { ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, width, height); }
+        if (motion === 'light' || motion === 'multi') {
+          const beam = ctx.createRadialGradient(lightX, 430, 10, lightX, 430, 330);
+          beam.addColorStop(0, `${template.accent}44`); beam.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = beam; ctx.fillRect(0, 180, width, 560);
+        }
         ctx.save();
+        ctx.translate(width / 2, 220 + ih / 2 + bob);
+        ctx.rotate(angle);
+        ctx.scale(zoom, zoom);
         ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 30;
-        ctx.drawImage(img, (width - iw) / 2, 220 + bob, iw, ih);
+        ctx.drawImage(img, -iw / 2, -ih / 2, iw, ih);
         ctx.restore();
         ctx.fillStyle = '#ffffff'; ctx.font = 'bold 38px Arial'; ctx.fillText(productName.slice(0, 34), width / 2, 790);
         ctx.fillStyle = '#e5e7eb'; ctx.font = '24px Arial'; ctx.fillText(benefit.slice(0, 42), width / 2, 842);
@@ -202,6 +221,15 @@ export const AdTemplateLibrary: React.FC = () => {
           </div>
           <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-slate-300"><Video className="mb-1 h-5 w-5 text-pink-300" /> فيديو عمودي 9:16 • المدة تتبع الصوت تلقائيًا</div>
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+        <h2 className="mb-3 text-lg font-bold text-white">مكتبة الحركة والأسلوب</h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className="text-sm text-slate-300">نوع الحركة<select value={motion} onChange={(e) => setMotion(e.target.value as MotionId)} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white"><option value="multi">حركات متعددة في الإعلان</option><option value="orbit">دوران الكاميرا حول المنتج</option><option value="spin">ميلان/دوران بصري للصورة</option><option value="zoom">تقريب وابتعاد سينمائي</option><option value="float">حركة عائمة ناعمة</option><option value="light">إضاءة درامية متحركة</option></select></label>
+          <label className="text-sm text-slate-300">الأسلوب البصري<select value={visualStyle} onChange={(e) => setVisualStyle(e.target.value as StyleId)} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white"><option value="variety">كل الأساليب حسب القالب</option><option value="luxury">فاخر أسود وذهبي</option><option value="natural">طبيعي بيج وأبيض</option><option value="pink">وردي تجميلي</option><option value="dark">استوديو داكن</option></select></label>
+        </div>
+        <p className="mt-3 text-xs leading-5 text-amber-200">مهم: القوالب المحلية تضيف حركة ثنائية الأبعاد فقط. دوران كاميرا 360° حقيقي أو دوران العبوة لإظهار جوانب غير موجودة في الصورة يتطلب صور زوايا متعددة أو نموذج 3D.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -276,6 +304,12 @@ export const AdTemplateLibrary: React.FC = () => {
             <canvas ref={canvasRef} className="hidden" />
             <button onClick={exportVideo} disabled={busyExport || !imageUrl || !audioUrl || !audioDuration} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 font-bold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50">{busyExport ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}{busyExport ? 'جارٍ تصدير الفيديو…' : 'تصدير الفيديو الإعلاني'}</button>
             <p className="mt-2 text-xs leading-5 text-slate-500">يتم التصدير محليًا إلى WebM، ومدة الفيديو تتبع الصوت. القالب يحافظ على صورة العبوة كما هي، لكنه لا ينشئ مشاهد واقعية أو موديلًا متحدثًا.</p>
+            <details className="mt-4 rounded-xl border border-slate-700 bg-slate-950/70 p-3">
+              <summary className="cursor-pointer font-semibold text-indigo-200">وضع الإنتاج السينمائي — تجهيز وصف للمحرّك الخارجي</summary>
+              <p className="mt-2 text-xs leading-5 text-slate-400">هذا ينشئ وصفًا جاهزًا للنسخ إلى محرّك فيديو سينمائي؛ لا يدّعي تشغيل محرّك ذكاء اصطناعي غير موصول بالتطبيق.</p>
+              <textarea readOnly value={cinematicPrompt} rows={8} className="mt-3 w-full rounded-lg border border-slate-700 bg-slate-900 p-3 text-xs text-slate-200" />
+              <button type="button" onClick={() => { void navigator.clipboard?.writeText(cinematicPrompt); setStatus('تم نسخ وصف الإنتاج السينمائي إذا كان المتصفح يسمح بالنسخ.'); }} className="mt-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-bold text-white">نسخ وصف الإنتاج السينمائي</button>
+            </details>
             {status && <p className="mt-3 text-sm text-emerald-300">{status}</p>}
             {error && <p role="alert" className="mt-3 text-sm text-red-300">{error}</p>}
             {audioUrl && <button onClick={() => audioRef.current?.play()} className="mt-3 inline-flex items-center gap-2 text-sm text-indigo-300 hover:text-indigo-200"><Play className="h-4 w-4" />استمع للتعليق الصوتي</button>}
