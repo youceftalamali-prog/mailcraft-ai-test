@@ -58,3 +58,13 @@ No production deploy is part of this guide. Only consider deployment after typec
 - The Video Studio can ask xKiro to produce a timestamped ad storyboard. The default model is `qwen/qwen3.8-omni-flash:free`; check xKiro's live catalog for current availability and free-tier limits.
 - Important limitation: xKiro's published API reference currently documents chat, image generation, speech and search endpoints, but does not list a video-generation endpoint. Therefore this integration generates a storyboard, **not** AI-rendered moving video. The existing browser exporter still produces a still-image WebM with Gemini TTS audio.
 - Gemini TTS remains unchanged. Do not commit API keys or deploy this branch until local lint, tests and build have been reviewed.
+
+
+## Luma Ray 3.2 Text-to-Video
+
+- Create an API key at [Luma API Platform](https://platform.lumalabs.ai/) and set `LUMA_AGENTS_API_KEY` in your local `.env`. Keep it private and do not commit it.
+- The Video Studio submits a text-to-video job to the official Luma Agents API, polls for completion, and displays the resulting video.
+- The default model is `ray-3.2`; the UI offers 9:16, 16:9 and other aspect ratios, 5s/9s durations, and 540p/720p/1080p options.
+- This first integration is **text-to-video**. It does not yet animate the user's uploaded product image; image-to-video needs a supported image reference/upload flow.
+- Gemini TTS remains unchanged. Luma API use is credit-based; trial credits and costs depend on the account and requested output. Confirm the account's balance before generating.
+- Validate locally with `npm run lint`, `npm test`, and `npm run build` before deployment. This branch has not yet been run through those commands.
