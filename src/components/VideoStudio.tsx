@@ -13,6 +13,10 @@ export const VideoStudio: React.FC = () => {
   const [videoUrl, setVideoUrl] = useState('');
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState('');
+  const [productDescription, setProductDescription] = useState('');
+  const [visualStyle, setVisualStyle] = useState('cinematic product advertisement');
+  const [storyboard, setStoryboard] = useState('');
+  const [storyboardBusy, setStoryboardBusy] = useState(false);
   const [error, setError] = useState('');
   const imageRef = useRef<HTMLImageElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -51,6 +55,29 @@ export const VideoStudio: React.FC = () => {
       setError(e instanceof Error ? e.message : 'حدث خطأ أثناء توليد الصوت.');
       setStatus('');
     } finally { setBusy(false); }
+  };
+
+
+  const generateStoryboard = async () => {
+    if (!productDescription.trim()) {
+      setError('اكتب وصف المنتج قبل إنشاء مخطط المشاهد.');
+      return;
+    }
+    setStoryboardBusy(true); setError(''); setStatus('جارٍ إنشاء مخطط المشاهد عبر xKiro…');
+    try {
+      const response = await fetch('/api/xkiro/video-storyboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productDescription, script, style: visualStyle, duration: 10 })
+      });
+      const data: { storyboard?: string; error?: string; details?: string; note?: string } = await response.json();
+      if (!response.ok || !data.storyboard) throw new Error(data.error || data.details || `تعذر إنشاء مخطط المشاهد (HTTP ${response.status})`);
+      setStoryboard(data.storyboard);
+      setStatus(data.note || 'تم إنشاء مخطط المشاهد عبر xKiro.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'حدث خطأ أثناء إنشاء مخطط المشاهد.');
+      setStatus('');
+    } finally { setStoryboardBusy(false); }
   };
 
   const createVideo = async () => {
@@ -139,6 +166,31 @@ export const VideoStudio: React.FC = () => {
       <div className="flex items-center gap-3"><div className="rounded-2xl bg-indigo-500/20 p-3"><Film className="h-7 w-7 text-indigo-300" /></div><div><p className="text-xs font-bold tracking-widest text-indigo-300">MAILCRAFT AI • VIDEO STUDIO</p><h1 className="mt-1 text-2xl font-extrabold text-white sm:text-3xl">استوديو إنشاء الفيديو</h1></div></div>
       <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">حوّل صورة المنتج ونص الإعلان إلى فيديو عمودي مع تعليق صوتي من Gemini TTS. يتم تركيب الفيديو داخل المتصفح دون رفع صورة المنتج إلى خدمة خارجية.</p>
       <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-200"><span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">1080 × 1920</span><span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">صوت جزائري</span><span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">تنزيل WebM</span></div>
+    </div>
+    <div className="space-y-4 rounded-3xl border border-cyan-500/25 bg-slate-900/70 p-5 sm:p-6">
+      <div>
+        <p className="text-xs font-bold tracking-wider text-cyan-300">XKIRO • AI STORYBOARD</p>
+        <h2 className="mt-1 text-lg font-extrabold text-white">مخطط مشاهد الإعلان بالذكاء الاصطناعي</h2>
+        <p className="mt-1 text-sm leading-6 text-slate-400">يستخدم xKiro لإنشاء خطة تصوير ومشاهد قابلة للتنفيذ. هذا ليس توليدًا لفيديو متحرك بحد ذاته.</p>
+      </div>
+      <label className="block text-sm font-bold text-slate-200">وصف المنتج
+        <textarea value={productDescription} onChange={e => setProductDescription(e.target.value)} rows={3} placeholder="مثال: كريم ألوفيرا مرطب، 2500 دج، مناسب للترويج على Reels…" className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm leading-6 text-white outline-none focus:border-cyan-400" />
+      </label>
+      <label className="block text-sm font-bold text-slate-200">الأسلوب البصري
+        <select value={visualStyle} onChange={e => setVisualStyle(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm">
+          <option value="cinematic product advertisement">إعلان سينمائي فاخر</option>
+          <option value="luxury beauty commercial, soft champagne lighting">جمال وفخامة وإضاءة ناعمة</option>
+          <option value="fast-paced social media ad, bold hooks and transitions">إعلان سريع لـ TikTok وReels</option>
+          <option value="clean studio product showcase, macro details">عرض منتج داخل استوديو</option>
+        </select>
+      </label>
+      <button disabled={storyboardBusy} onClick={generateStoryboard} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-700 px-4 py-3 font-bold text-white hover:bg-cyan-600 disabled:opacity-50">
+        {storyboardBusy ? <><LoaderCircle className="h-4 w-4 animate-spin" /> جارٍ إنشاء المخطط…</> : 'إنشاء مخطط المشاهد عبر xKiro'}
+      </button>
+      {storyboard && <div className="whitespace-pre-wrap rounded-xl border border-cyan-500/20 bg-slate-950 p-4 text-sm leading-7 text-slate-200">
+        <div className="mb-2 font-bold text-cyan-300">مخطط المشاهد</div>{storyboard}
+        <button onClick={() => navigator.clipboard.writeText(storyboard)} className="mt-3 rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-cyan-200 hover:bg-slate-800">نسخ المخطط</button>
+      </div>}
     </div>
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="space-y-5 rounded-3xl border border-slate-800 bg-slate-900/70 p-5 sm:p-6">
