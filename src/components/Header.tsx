@@ -1,8 +1,8 @@
 import React from 'react';
-import { Film, Mail, Mic, MessageSquare, Sparkles, Wand2 } from 'lucide-react';
+import { Film, Mail, Mic, MessageSquare, Sparkles, Wand2, Layers } from 'lucide-react';
 
 interface HeaderProps {
-  activeTab: 'campaign' | 'algerian_outros' | 'chat' | 'video';
+  activeTab: 'campaign' | 'algerian_outros' | 'chat' | 'video' | 'ad_templates';
   setActiveTab: (tab: 'campaign' | 'algerian_outros' | 'chat' | 'video') => void;
   onOpenSample: () => void;
 }
@@ -74,6 +74,19 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenS
           >
             <Film className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>الفيديو</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('ad_templates')}
+            aria-label="Editable Ad Template Library tab"
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all shrink-0 ${
+              activeTab === 'ad_templates'
+                ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/50'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>قوالب الإعلانات</span>
           </button>
 
           <button
