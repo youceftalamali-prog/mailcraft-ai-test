@@ -21,7 +21,6 @@ export const AdTemplateLibrary: React.FC = () => {
   const [script, setScript] = useState('اكتشفي عنايتك الجديدة مع [اسم المنتج]. جودة وأناقة في كل استعمال. اطلبي الآن، والدفع عند الاستلام.');
   const [dialect, setDialect] = useState('algerian');
   const [voice, setVoice] = useState('Zephyr');
-  const [durationSeconds, setDurationSeconds] = useState(30);
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const [imageUrl, setImageUrl] = useState('');
   const [imageName, setImageName] = useState('');
@@ -76,7 +75,6 @@ export const AdTemplateLibrary: React.FC = () => {
   const handleAudioMetadata = (duration: number) => {
     if (Number.isFinite(duration) && duration > 0) {
       setAudioDuration(duration);
-      setDurationSeconds(duration);
       setStatus(`تم تحديد مدة الفيديو تلقائيًا حسب الصوت: ${Math.ceil(duration)} ثانية.`);
     }
   };
