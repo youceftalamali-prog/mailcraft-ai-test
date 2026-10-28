@@ -19,6 +19,7 @@ export const AdTemplateLibrary: React.FC = () => {
   const [benefit, setBenefit] = useState('عناية يومية بلمسة من الفخامة');
   const [cta, setCta] = useState('اطلبي الآن — الدفع عند الاستلام');
   const [script, setScript] = useState('اكتشفي عنايتك الجديدة مع [اسم المنتج]. جودة وأناقة في كل استعمال. اطلبي الآن، والدفع عند الاستلام.');
+  const [videoScript, setVideoScript] = useState('المشهد 1: لقطة قريبة للمنتج على خلفية فاخرة.\nالمشهد 2: حركة كاميرا بطيئة حول العبوة مع إضاءة ناعمة.\nالمشهد 3: إظهار المنتج والسعر ثم دعوة للطلب.');
   const [dialect, setDialect] = useState('algerian');
   const [voice, setVoice] = useState('Zephyr');
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
@@ -121,8 +122,11 @@ export const AdTemplateLibrary: React.FC = () => {
         recorder.onerror = () => reject(new Error('تعذر تسجيل الفيديو.'));
         recorder.onstop = () => resolve(new Blob(chunks, { type: mimeType }));
       });
+      const videoScenes = videoScript.split('\\n').map((line) => line.trim()).filter(Boolean);
       const drawFrame = (time: number) => {
         const progress = Math.min(time / audioDuration, 1);
+        const sceneIndex = videoScenes.length ? Math.min(videoScenes.length - 1, Math.floor(progress * videoScenes.length)) : -1;
+        const sceneCaption = sceneIndex >= 0 ? videoScenes[sceneIndex].replace(/^المشهد\\s*\\d+\\s*[:：-]?\\s*/, '') : '';
         const gradient = ctx.createLinearGradient(0, 0, width, height);
         if (selected === 'offer') { gradient.addColorStop(0, '#1b1110'); gradient.addColorStop(1, '#542015'); }
         else if (selected === 'problem') { gradient.addColorStop(0, '#071d1a'); gradient.addColorStop(1, '#123d35'); }
@@ -148,7 +152,10 @@ export const AdTemplateLibrary: React.FC = () => {
         const buttonW = Math.min(600, Math.max(320, ctx.measureText(ctaText).width + 70));
         ctx.fillStyle = template.accent; ctx.beginPath(); ctx.roundRect((width - buttonW) / 2, 1010, buttonW, 76, 22); ctx.fill();
         ctx.fillStyle = '#111111'; ctx.fillText(ctaText, width / 2, 1058);
-        ctx.fillStyle = '#cbd5e1'; ctx.font = '20px Arial'; ctx.fillText('اطلبي الآن • شحن حسب الولاية', width / 2, 1150);
+        ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 22px Arial';
+        const caption = sceneCaption.length > 42 ? `${sceneCaption.slice(0, 42)}…` : sceneCaption;
+        ctx.fillText(caption, width / 2, 1130);
+        ctx.fillStyle = '#cbd5e1'; ctx.font = '20px Arial'; ctx.fillText('اطلبي الآن • شحن حسب الولاية', width / 2, 1170);
         ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillRect(70, 1200, 580, 4);
         ctx.fillStyle = template.accent; ctx.fillRect(70, 1200, 580 * progress, 4);
       };
@@ -229,7 +236,7 @@ export const AdTemplateLibrary: React.FC = () => {
           </div>
 
           <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
-            <h2 className="mb-4 text-lg font-bold text-white">2. نص الإعلان والصوت</h2>
+            <h2 className="mb-4 text-lg font-bold text-white">2. سكريبت الكلام والصوت</h2>
             <label className="block text-sm text-slate-300">نص التعليق الصوتي<textarea value={script} onChange={(e) => setScript(e.target.value)} rows={4} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-white outline-none focus:border-indigo-400" /></label>
             <p className="mt-2 text-xs text-slate-500">يمكنك استعمال [اسم المنتج] و[السعر] داخل النص لاستبدالهما تلقائيًا.</p>
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -242,6 +249,12 @@ export const AdTemplateLibrary: React.FC = () => {
               <input type="file" accept="audio/*" onChange={(event) => updateAudio(event.target.files?.[0])} className="mt-2 block w-full rounded-xl border border-slate-700 bg-slate-950 p-2 text-sm text-white file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-600 file:px-3 file:py-2 file:text-white" />
             </label>
             {audioDuration && <p className="mt-2 text-sm font-semibold text-emerald-300">مدة الفيديو المحددة تلقائيًا: {Math.ceil(audioDuration)} ثانية</p>}
+          </div>
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+            <h2 className="mb-2 text-lg font-bold text-white">3. سكريبت الفيديو — تكتبه أنت</h2>
+            <p className="mb-3 text-sm leading-6 text-slate-400">اكتب وصف اللقطات بالترتيب، كل مشهد في سطر مستقل. هذا الحقل منفصل عن كلام المعلّق الصوتي، ولن يعيد الذكاء الاصطناعي صياغته. في القالب الحالي تظهر أوصاف المشاهد بالتتابع على الفيديو؛ أما تنفيذ حركات كاميرا واقعية أو إنشاء موديل يتكلم فيحتاج محرّك فيديو مخصصًا.</p>
+            <label className="block text-sm text-slate-300">وصف المشاهد<textarea value={videoScript} onChange={(e) => setVideoScript(e.target.value)} rows={6} placeholder={"المشهد 1: لقطة قريبة للعبوة...\nالمشهد 2: حركة كاميرا بطيئة...\nالمشهد 3: عرض السعر والدعوة للطلب..."} className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-white outline-none focus:border-indigo-400" /></label>
+            <p className="mt-2 text-xs text-slate-500">نصيحة: خصّص هذا القالب لمنتجات التجميل، واذكر أن صورة العبوة الأصلية يجب أن تبقى كما هي.</p>
           </div>
         </div>
 
