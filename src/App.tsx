@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { AccountPage, AdminPage, PricingPage } from './components/AccountPages';
 import { Header } from './components/Header';
 import { CampaignForm } from './components/CampaignForm';
 import { CampaignDisplay } from './components/CampaignDisplay';
@@ -9,7 +10,20 @@ import { generateDefaultCampaign } from './utils/campaign';
 import { Sparkles, AlertCircle, Wand2, Mic, MessageSquare } from 'lucide-react';
 
 export default function App() {
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
   const [activeTab, setActiveTab] = useState<'campaign' | 'algerian_outros' | 'chat'>('campaign');
+
+  useEffect(() => {
+    const handlePopState = () => setCurrentPath(window.location.pathname);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigate = (path: string) => {
+    if (window.location.pathname !== path) window.history.pushState({}, '', path);
+    setCurrentPath(path);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   const [campaign, setCampaign] = useState<EmailCampaign>(() =>
     generateDefaultCampaign('SaaS Product Launch with 30% Lifetime Discount')
   );
@@ -168,8 +182,19 @@ export default function App() {
     setErrorMessage(null);
   };
 
+  if (currentPath === '/login' || currentPath === '/signup') return <AccountPage key={currentPath} onNavigate={navigate} />;
+  if (currentPath === '/pricing') return <PricingPage onNavigate={navigate} />;
+  if (currentPath === '/admin') return <AdminPage onNavigate={navigate} />;
+
   return (
     <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col selection:bg-indigo-500 selection:text-white">
+      <div className="border-b border-slate-800/80 bg-slate-950/90">
+        <nav className="mx-auto flex max-w-7xl flex-wrap items-center justify-end gap-2 px-4 py-2 sm:px-6 lg:px-8" aria-label="Account navigation">
+          <button onClick={() => navigate('/pricing')} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white">Pricing</button>
+          <button onClick={() => navigate('/login')} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-800 hover:text-white">Sign in</button>
+          <button onClick={() => navigate('/signup')} className="rounded-lg bg-indigo-500 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-indigo-400">Create account</button>
+        </nav>
+      </div>
       {/* Top Header */}
       <Header
         activeTab={activeTab}
