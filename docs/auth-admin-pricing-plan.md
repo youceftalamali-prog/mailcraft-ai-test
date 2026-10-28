@@ -4,67 +4,46 @@
 
 - Add public registration and login, a protected administrator area, and a pricing page with free and paid tiers.
 - Preserve the current campaign generator, image generation, chatbot, Algerian voice studio, and all existing Gemini/TTS request and response paths.
-- Do not change `server.ts` TTS endpoints as part of the page work unless a separately reviewed security integration strictly requires an isolated addition.
+- Do not change `server.ts` TTS endpoints as part of this feature unless a separately reviewed security integration strictly requires an isolated addition.
 - Work only on `feat/auth-admin-pricing-pages`; do not merge, deploy, or modify production without explicit approval.
 
-## Repository review (main)
+## Repository review
 
 - Frontend: React 19 + TypeScript + Vite + Tailwind CSS 4, entrypoint `src/main.tsx`, single-screen app in `src/App.tsx`.
-- Existing navigation is tab-based in `src/components/Header.tsx`; no router is currently configured in the reviewed files.
-- Backend: Express in `server.ts`; current API includes AI campaign, image, chat, and voice generation endpoints.
-- Environment example currently documents `GEMINI_API_KEY` and `APP_URL`.
-- No authentication provider, user model, database connection, session middleware, subscription system, or payment integration was found in the reviewed files.
-- There is an open PR #1 for Gemini TTS request-format changes on another branch. This work must not modify or merge that PR.
+- Backend: Express in `server.ts`; existing APIs cover campaign generation, image generation, chat, and voice generation.
+- No existing auth provider, user model, database connection, session middleware, subscription system, or payment integration was found.
+- An existing PR #1 for Gemini TTS request-format changes is on another branch and remains untouched.
 
-## Proposed pages and routes
+## Architecture decision
 
-1. `/login` and `/signup`
-   - Responsive forms, server-side validation, clear error/loading states, logout, and password-reset flow only once an email delivery mechanism is configured.
-   - Passwords must be hashed with a modern password-hashing algorithm; never store plain-text passwords or secrets in client code.
-2. `/pricing`
-   - Show Free and paid tiers, feature/usage limits, billing cadence, and a clear upgrade CTA.
-   - Do not claim a paid plan is active based on a client-side button. Paid entitlements must come from trusted server-side subscription state.
-3. `/admin`
-   - Server-enforced admin-only access; user/plan/usage overview and account management.
-   - Never rely on hiding an admin link or a client-side role flag as authorization.
-4. Existing app
-   - Keep all three existing tabs and their generation workflows unchanged; add only the smallest navigation integration needed.
+Create an isolated Cloudflare Worker for auth/admin APIs, backed by Neon PostgreSQL through Cloudflare Hyperdrive. This keeps the existing Gemini/TTS service out of the first auth implementation's change surface. Before enabling it, configure same-origin routing for `/api/auth/*` and `/api/admin/*`, set the exact staging origin, and test cookie behavior. No deployment has been made.
 
-## Security and data design gates
+## Implemented on this branch (scaffold; not production-ready)
 
-- Before implementation, select a durable database and deployment-compatible connection method. No database is currently configured in the reviewed source.
-- Define users, role, plan, usage counters, and subscription status with server-side ownership checks.
-- Prefer secure, HTTP-only, SameSite cookies; protect state-changing requests against CSRF as appropriate; rate-limit login/signup; validate inputs; avoid leaking provider errors or secrets.
-- Bootstrap the first administrator through a one-time server-side environment secret or an explicit manual database operation. Never allow public signup to choose the admin role.
-- Keep Gemini credentials server-side and leave existing Gemini/TTS provider calls untouched.
-- A paid tier requires a payment provider, webhook signature verification, and idempotent subscription updates. Pricing UI can be built before live billing, but checkout must be clearly marked unavailable until configured.
-- Never store payment card data directly.
+- Added `auth-service/` with a Cloudflare Worker/Hono entrypoint, TypeScript config, Wrangler configuration template, and setup instructions.
+- Added PostgreSQL schema for users, sessions, monthly usage, rate-limit buckets, and audit events.
+- Added registration/login/logout/session lookup routes. Passwords use PBKDF2-SHA-256 with a per-account random salt; raw session tokens are not stored in the database. Cookies are HttpOnly, Secure, SameSite=Lax.
+- Public signup always assigns the normal `user` role. A token-gated bootstrap route can create the first administrator; remove the route and rotate the bootstrap secret immediately after setup.
+- Added an admin overview endpoint with server-side session and role checks.
+- Added server-side plan entitlement definitions and an atomic monthly usage reservation helper.
 
-## Safe implementation sequence
+## Explicit remaining blockers
 
-1. Baseline: record current branch/head and existing test/build results; inspect complete API routes and deployment constraints.
-2. Add a router and new page components in isolated files, preserving the current app as the default authenticated/guest workspace according to the agreed product behavior.
-3. Add auth persistence and server-side authorization only after database/provider choice is confirmed.
-4. Add plan/usage enforcement server-side without changing generation logic; wrap access checks around endpoints rather than rewriting their AI internals.
-5. Add payment-provider adapter and webhook only after provider selection and credentials are available.
-6. Validate with TypeScript/lint, unit tests, production build, route access tests (guest/user/admin), and regression checks for campaign, image, chat, and TTS flows.
-7. Open a pull request for review. Do not merge or deploy without explicit approval.
+- No Neon database or Hyperdrive configuration has been supplied/configured in this repository; the SQL migration has not been applied to a live database.
+- The auth Worker is not routed to the frontend and has not been deployed. The sample origin and Hyperdrive ID in `wrangler.jsonc` are placeholders.
+- The usage reservation helper is not yet connected to the existing campaign/image/voice generation routes. Do not claim quotas are enforced until that integration and its regression tests are complete.
+- The account form UI still needs to be connected to the staged API after routing and cookie behavior are verified.
+- Email verification/password reset are not implemented; they require a mail provider and product decision.
+- Paid checkout is disabled until a payment provider that supports business onboarding and payouts in Algeria is selected, with verified, idempotent webhooks.
+- No typecheck, build, or automated tests have been run in this remote-edit step.
 
-## Decisions still required before live auth/billing
+## Next steps
 
-- Database/provider available in the target deployment (or approval to add one).
-- Payment processor that can onboard the business and accept payouts in Algeria.
-- Exact plan prices, billing cadence, usage quotas, and whether free users must verify email.
-- Email provider for password resets and account verification.
+1. Configure a dedicated staging Neon database and Hyperdrive binding, using secrets in Cloudflare/GitHub settings rather than chat or committed files.
+2. Run migrations and implement Worker unit/integration tests for signup, login, logout, sessions, rate limits, admin denial, and bootstrap.
+3. Set up same-origin staging routing and connect the account UI to the auth API.
+4. Integrate quota reservations at the server boundary for campaign, image, and voice endpoints without rewriting their Gemini/TTS logic.
+5. Run typecheck/build and regression smoke tests for campaign, image, chat, and all voice/TTS flows.
+6. Open a review PR when checks are available. Do not merge or deploy without explicit approval.
 
-## Implementation checkpoint (2026-10-28)
-
-- Added presentational page shells in `src/components/AccountPages.tsx` for login/signup, pricing, and the restricted admin console.
-- Added minimal path-based navigation in `src/App.tsx` for `/login`, `/signup`, `/pricing`, and `/admin`; existing campaign/voice/chat UI remains the default route.
-- Login/signup are explicitly non-functional previews; no credentials are submitted and no account is created.
-- Admin page exposes no user data or admin actions until server-side auth and role checks exist.
-- Paid checkout remains disabled until a payment provider and verified webhook handling are implemented.
-- No Gemini/TTS endpoint code was changed.
-- Build/typecheck/test execution has not been performed in this remote-edit step; verify before merging.
-
-This checkpoint is not production-ready authentication or billing. Do not deploy or merge until backend security, database connectivity, and regression tests are complete.
+This branch is a reviewable implementation scaffold, not a launch-ready authentication or billing system.
