@@ -247,8 +247,7 @@ app.post('/api/generate-voice-script', async (req: Request, res: Response): Prom
       dialectLabel = 'العاصمي (الوسط)';
       dialectRule =
         'اللهجة العاصمية والوسط الجزائري: كلمات مميزة مثل (خاوتي وخواتاتي، ما تنساوش ديرو جيم وابوني، نتلاقاو فالعدد الجاي بحول الله، تهلاو ف رواحتكم.. سلام). نبرة دافئة وودودة وخفيفة.';
-    } else if (
-      dialect === 'eastern' ||
+    } else if (      dialect === 'eastern' ||
       dialect.includes('الشرقي') ||
       dialect.includes('قسنطين') ||
       dialect.includes('عناب')
@@ -497,8 +496,7 @@ app.post('/api/generate-speech', async (req: Request, res: Response): Promise<vo
           voiceConfig: {
             prebuiltVoiceConfig: { voiceName: validVoice },
           },
-        },
-      },
+        },      },
     });
 
     const base64Audio = ttsResponse.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
@@ -747,8 +745,7 @@ const SERVER_EMOTION_STYLES: Record<string, { ar: string; instruction: string }>
       'Emotionally expressive, heartfelt. Warmth and sincerity, gentle emphasis on emotional words.',
   },
   gradual_story: {
-    ar: 'قصة بمشاعر متدرجة',
-    instruction:
+    ar: 'قصة بمشاعر متدرجة',    instruction:
       'Narrative arc: start neutral/curious, gradually increase warmth, finish with clear emotional resolution.',
   },
 };
@@ -992,13 +989,64 @@ With this new solution, you eliminate tedious guesswork and move straight to hig
   };
 }
 
+// xKiro creative planner: generates a video storyboard, not a rendered video.
+// xKiro's published API lists chat/images/speech endpoints, but no video-generation endpoint.
+app.post('/api/xkiro/video-storyboard', async (req: Request, res: Response): Promise<void> => {
+  const apiKey = process.env.XKIRO_API_KEY;
+  if (!apiKey) {
+    res.status(503).json({ error: 'xKiro غير مضبوط بعد. أضف XKIRO_API_KEY إلى ملف .env المحلي.' });
+    return;
+  }
+  const { productDescription, script, style = 'cinematic product advertisement', duration = 10 } = req.body ?? {};
+  if (typeof productDescription !== 'string' || !productDescription.trim()) {
+    res.status(400).json({ error: 'اكتب وصف المنتج أولاً.' });
+    return;
+  }
+  try {
+    const upstream = await fetch('https://api.xkiro.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: process.env.XKIRO_VIDEO_PLANNER_MODEL || 'qwen/qwen3.8-omni-flash:free',
+        temperature: 0.7,
+        messages: [
+          { role: 'system', content: 'You are a professional short-form product ad director. Return a concise storyboard in Arabic, ideally Algerian Arabic when the brief is Arabic. Give timestamped shots, camera movement, lighting, transitions, on-screen text, and a final CTA. Do not claim the storyboard itself is a rendered video. Do not invent product claims.' },
+          { role: 'user', content: `Create a ${Math.min(30, Math.max(5, Number(duration) || 10))}-second storyboard. Product: ${productDescription.trim().slice(0, 2500)}. Spoken script: ${typeof script === 'string' ? script.trim().slice(0, 4000) : 'Write a short voiceover suggestion.'}. Visual style: ${String(style).slice(0, 300)}. Make each shot feasible for an image-to-video generator.` }
+        ]
+      })
+    });
+    const payload = await upstream.json() as { choices?: Array<{ message?: { content?: string } }>; error?: { message?: string } };
+    if (!upstream.ok) {
+      res.status(upstream.status >= 500 ? 502 : upstream.status).json({
+        error: 'فشل طلب xKiro.',
+        details: payload.error?.message || `xKiro returned HTTP ${upstream.status}`
+      });
+      return;
+    }
+    const storyboard = payload.choices?.[0]?.message?.content;
+    if (!storyboard) {
+      res.status(502).json({ error: 'لم يُرجع xKiro مخطط مشاهد صالحاً.' });
+      return;
+    }
+    res.json({
+      success: true,
+      model: process.env.XKIRO_VIDEO_PLANNER_MODEL || 'qwen/qwen3.8-omni-flash:free',
+      storyboard,
+      renderedVideo: false,
+      note: 'هذا مخطط مشاهد فقط. توليد فيديو AI متحرك يحتاج مزوّد فيديو يدعم إنشاء الفيديو فعلياً.'
+    });
+  } catch (err: unknown) {
+    console.error('xKiro storyboard request failed:', err);
+    res.status(502).json({ error: 'تعذر الاتصال بخدمة xKiro.', details: err instanceof Error ? err.message : String(err) });
+  }
+});
+
 // Mount Vite or serve static assets
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
+      server: { middlewareMode: true },      appType: 'spa',
     });
     app.use(vite.middlewares);
   } else {
