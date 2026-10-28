@@ -5,13 +5,14 @@ import { CampaignForm } from './components/CampaignForm';
 import { CampaignDisplay } from './components/CampaignDisplay';
 import { AlgerianOutroStudio } from './components/AlgerianOutroStudio';
 import { ChatbotInterface } from './components/ChatbotInterface';
+import { VideoStudio } from './components/VideoStudio';
 import { EmailCampaign } from './types/index';
 import { generateDefaultCampaign } from './utils/campaign';
 import { Sparkles, AlertCircle, Wand2, Mic, MessageSquare } from 'lucide-react';
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
-  const [activeTab, setActiveTab] = useState<'campaign' | 'algerian_outros' | 'chat'>('campaign');
+  const [activeTab, setActiveTab] = useState<'campaign' | 'algerian_outros' | 'chat' | 'video'>('campaign');
 
   useEffect(() => {
     const handlePopState = () => setCurrentPath(window.location.pathname);
@@ -277,7 +278,10 @@ export default function App() {
           />
         )}
 
-        {/* Tab 3: Gemini Chatbot */}
+        {/* Tab 3: Video Studio */}
+        {activeTab === 'video' && <VideoStudio />}
+
+        {/* Tab 4: Gemini Chatbot */}
         {activeTab === 'chat' && (
           <ChatbotInterface
             onInsertToCampaign={handleInsertChatIntoCampaign}
