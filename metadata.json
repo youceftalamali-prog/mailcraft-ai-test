@@ -1,0 +1,6 @@
+{
+  "name": "CampaignForge AI & Algerian Voice Studio",
+  "description": "Generate complete email marketing campaigns with AI subject lines, conversion body copy, 1K/2K/4K visual generation, multi-turn Gemini chatbot, and Algerian video outro voiceovers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
