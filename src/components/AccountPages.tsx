@@ -53,7 +53,7 @@ export function AccountPage({ onNavigate }: PageProps) {
             <label className="block text-sm font-semibold text-slate-300">Email address<input className={`${inputClass} mt-2`} type="email" name="email" autoComplete="email" placeholder="you@example.com" required /></label>
             <label className="block text-sm font-semibold text-slate-300">Password<input className={`${inputClass} mt-2`} type="password" name="password" autoComplete={isSignup ? 'new-password' : 'current-password'} minLength={8} placeholder="At least 8 characters" required /></label>
             {isSignup && <p className="text-xs leading-5 text-slate-500">By continuing, you agree to the Terms of Service and Privacy Policy.</p>}
-            <button type="submit" className={primaryButton + ' w-full'} disabled><LockKeyhole className="h-4 w-4" /> {isSignup ? 'Create account' : 'Sign in'} — coming soon</button>
+            <button type="submit" className={primaryButton + ' w-full'}><LockKeyhole className="h-4 w-4" /> {isSignup ? 'Create account' : 'Sign in'} — coming soon</button>
           </form>
           {notice && <p role="status" className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">{notice}</p>}
           <p className="mt-6 text-xs leading-5 text-slate-500">Authentication is intentionally disabled in this preview until secure server-side sessions and database storage are configured.</p>
