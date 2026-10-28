@@ -115,11 +115,16 @@ export const AdTemplateLibrary: React.FC = () => {
       const stream = canvas.captureStream(30);
       let audioStream: MediaStream | null = null;
       const audioEl = audioRef.current;
-      if (audioUrl && audioEl && 'captureStream' in audioEl) {
-        audioEl.currentTime = 0;
-        audioStream = (audioEl as HTMLAudioElement & { captureStream: () => MediaStream }).captureStream();
-        audioStream.getAudioTracks().forEach(track => stream.addTrack(track));
-      }
+      if (!audioEl || !audioUrl) throw new Error('الصوت غير جاهز للتصدير. أعد توليد الصوت أو ارفع الملف مرة أخرى.');
+      const audioCapture = (audioEl as HTMLAudioElement & { captureStream?: () => MediaStream; mozCaptureStream?: () => MediaStream });
+      const captureAudio = audioCapture.captureStream ?? audioCapture.mozCaptureStream;
+      if (!captureAudio) throw new Error('متصفحك لا يدعم دمج الصوت في الفيديو. استخدم أحدث إصدار من Chrome أو Edge.');
+      audioEl.pause();
+      audioEl.currentTime = 0;
+      audioStream = captureAudio.call(audioEl);
+      const audioTracks = audioStream.getAudioTracks();
+      if (!audioTracks.length) throw new Error('لم يتم العثور على مسار صوتي قابل للتسجيل. جرّب إعادة رفع ملف الصوت.');
+      audioTracks.forEach(track => stream.addTrack(track));
       const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' : 'video/webm';
       const recorder = new MediaRecorder(stream, { mimeType });
       const chunks: BlobPart[] = [];
@@ -182,9 +187,10 @@ export const AdTemplateLibrary: React.FC = () => {
         ctx.fillStyle = template.accent; ctx.fillRect(70, 1200, 580 * progress, 4);
       };
       recorder.start();
-      if (audioUrl && audioEl && audioStream) {
+      if (audioEl && audioStream) {
         audioEl.currentTime = 0;
         await audioEl.play();
+        if (audioEl.paused) throw new Error('لم يبدأ تشغيل الصوت؛ اضغط تشغيل على الصوت ثم أعد التصدير.');
       }
       const start = performance.now();
       await new Promise<void>((resolve) => {
@@ -198,6 +204,7 @@ export const AdTemplateLibrary: React.FC = () => {
       });
       recorder.stop();
       const blob = await finished;
+      if (audioEl) audioEl.pause();
       stream.getTracks().forEach(track => track.stop());
       audioStream?.getTracks().forEach(track => track.stop());
       const url = URL.createObjectURL(blob);
@@ -205,7 +212,7 @@ export const AdTemplateLibrary: React.FC = () => {
       link.href = url; link.download = `campaignforge-ad-${Math.ceil(audioDuration)}s.webm`; link.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
       const durationLabel = `${Math.ceil(audioDuration)} ثانية`;
-      setStatus(`تم تصدير فيديو مدته ${durationLabel} بصيغة WebM. يمكنك تشغيله أو تحويله إلى MP4 عند الحاجة.`);
+      setStatus(`تم تصدير فيديو مدته ${durationLabel} بصيغة WebM مع مسار الصوت المدمج. شغّل الملف بعد التنزيل للتأكد من تزامن الصوت والصورة.`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'تعذر تصدير الفيديو.');
       setStatus('');
