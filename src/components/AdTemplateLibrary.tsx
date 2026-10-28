@@ -134,7 +134,10 @@ export const AdTemplateLibrary: React.FC = () => {
         const sceneIndex = videoScenes.length ? Math.min(videoScenes.length - 1, Math.floor(progress * videoScenes.length)) : -1;
         const sceneCaption = sceneIndex >= 0 ? videoScenes[sceneIndex].replace(/^المشهد\s*\d+\s*[:：-]?\s*/, '') : '';
         const gradient = ctx.createLinearGradient(0, 0, width, height);
-        if (selected === 'offer') { gradient.addColorStop(0, '#1b1110'); gradient.addColorStop(1, '#542015'); }
+        if (visualStyle === 'natural') { gradient.addColorStop(0, '#f4eadc'); gradient.addColorStop(1, '#d8c8b3'); }
+        else if (visualStyle === 'pink') { gradient.addColorStop(0, '#40172e'); gradient.addColorStop(1, '#9d456e'); }
+        else if (visualStyle === 'dark') { gradient.addColorStop(0, '#030303'); gradient.addColorStop(1, '#171717'); }
+        else if (selected === 'offer') { gradient.addColorStop(0, '#1b1110'); gradient.addColorStop(1, '#542015'); }
         else if (selected === 'problem') { gradient.addColorStop(0, '#071d1a'); gradient.addColorStop(1, '#123d35'); }
         else if (selected === 'minimal') { gradient.addColorStop(0, '#111827'); gradient.addColorStop(1, '#26334b'); }
         else { gradient.addColorStop(0, '#09090b'); gradient.addColorStop(1, '#272018'); }
@@ -149,18 +152,17 @@ export const AdTemplateLibrary: React.FC = () => {
         const zoom = motion === 'zoom' || motion === 'multi' ? 1 + 0.045 * Math.sin(time * 0.8) : 1;
         const angle = motion === 'spin' ? Math.sin(time * 1.4) * 0.10 : motion === 'multi' ? Math.sin(time * 0.65) * 0.035 : 0;
         const lightX = ((time * 95) % (width + 260)) - 130;
-        if (visualStyle === 'natural') { ctx.fillStyle = '#eadfce'; ctx.fillRect(0, 0, width, height); }
-        else if (visualStyle === 'pink') { ctx.fillStyle = '#3b172b'; ctx.fillRect(0, 0, width, height); }
-        else if (visualStyle === 'dark') { ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, width, height); }
         if (motion === 'light' || motion === 'multi') {
           const beam = ctx.createRadialGradient(lightX, 430, 10, lightX, 430, 330);
           beam.addColorStop(0, `${template.accent}44`); beam.addColorStop(1, 'rgba(0,0,0,0)');
           ctx.fillStyle = beam; ctx.fillRect(0, 180, width, 560);
         }
         ctx.save();
-        ctx.translate(width / 2, 220 + ih / 2 + bob);
+        const orbitX = motion === 'orbit' ? Math.sin(time * 0.8) * 46 : motion === 'multi' ? Math.sin(time * 0.55) * 18 : 0;
+        const orbitScale = motion === 'orbit' ? 1 + Math.cos(time * 0.8) * 0.035 : 1;
+        ctx.translate(width / 2 + orbitX, 220 + ih / 2 + bob);
         ctx.rotate(angle);
-        ctx.scale(zoom, zoom);
+        ctx.scale(zoom * orbitScale, zoom * orbitScale);
         ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 30;
         ctx.drawImage(img, -iw / 2, -ih / 2, iw, ih);
         ctx.restore();
