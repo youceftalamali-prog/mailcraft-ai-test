@@ -357,6 +357,16 @@ app.post('/api/generate-voice-script', async (req: Request, res: Response): Prom
       textForTts = cleaned;
     }
 
+    // Prevent empty or stage-direction-only text from reaching Gemini TTS.
+    if (typeof textForTts !== 'string' || !textForTts.trim()) {
+      res.status(400).json({
+        error: 'النص فارغ بعد إزالة تعليمات الأداء. أدخل نصًا واضحًا ليتم تحويله إلى صوت.',
+        code: 'EMPTY_TTS_TEXT',
+        mode: generationMode,
+      });
+      return;
+    }
+
     // Build performance style SEPARATELY from spoken text (never spoken aloud)
     const speechStyle = buildServerSpeechStyle(
       deliverySettings.emotionId,
@@ -469,10 +479,14 @@ app.post('/api/generate-voice-script', async (req: Request, res: Response): Prom
 app.post('/api/generate-speech', async (req: Request, res: Response): Promise<void> => {
   try {
     const { text, voiceName = 'Zephyr', speechStyle } = req.body;
-    if (!text) {
-      res.status(400).json({ error: 'Text is required' });
+    if (typeof text !== 'string' || !text.trim()) {
+      res.status(400).json({
+        error: 'Text is required and must contain spoken words',
+        code: 'EMPTY_TTS_TEXT',
+      });
       return;
     }
+    const normalizedText = text.trim();
 
     const validVoice = ['Kore', 'Puck', 'Fenrir', 'Zephyr', 'Charon'].includes(voiceName) ? voiceName : 'Zephyr';
 
@@ -483,7 +497,7 @@ app.post('/api/generate-speech', async (req: Request, res: Response): Promise<vo
           role: 'user',
           parts: [
             {
-              text,
+              text: normalizedText,
               speechMetadata: {
                 style: speechStyle || 'Natural, warm, engaging Algerian dialect and tone with friendly outro energy',
               },
